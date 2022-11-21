@@ -20,6 +20,8 @@ type User struct {
 // With this method, the same user knows how to validate by himself
 func (user *User) Validate() *errors.RestErr {
 	// Remove white spaces and then, to lower case
+	user.FirstName = strings.TrimSpace(strings.ToLower(user.FirstName))
+	user.LastName = strings.TrimSpace(strings.ToLower(user.LastName))
 	user.Email = strings.TrimSpace(strings.ToLower(user.Email))
 	if user.Email == "" {
 		return errors.NewBadRequestError("invalid email address")
