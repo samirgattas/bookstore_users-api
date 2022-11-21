@@ -16,7 +16,9 @@ import (
 
 const (
 	indexUniqueEmail = "UNIQUE_email"
+	errorNoRows      = "no rows in result set"
 	queryInsertUser  = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?,?,?,?);"
+	queryGetUser     = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id = ?;"
 )
 
 var (
@@ -24,23 +26,27 @@ var (
 )
 
 func (user *User) Get() *errors.RestErr {
-	if err := users_db.Client.Ping(); err != nil {
-		panic(err)
+	// A statement is a connection so it's necessary to close it after use it
+	stmt, err := users_db.Client.Prepare(queryGetUser)
+	// Check if it was an error preparin the statement
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
 	}
-	result := userDB[user.ID]
-	if result == nil {
-		return errors.NewNotFoundError(fmt.Sprintf("user %d not found", user.ID))
+	defer stmt.Close()
+
+	result := stmt.QueryRow(user.ID)
+
+	if err := result.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
+		if strings.Contains(err.Error(), errorNoRows) {
+			return errors.NewNotFoundError(fmt.Sprintf("user %d not found", user.ID))
+		}
+		return errors.NewInternalServerError(fmt.Sprintf("error when trying  to get user %d: %s", user.ID, err.Error()))
 	}
-	user.ID = result.ID
-	user.FirstName = result.FirstName
-	user.LastName = result.LastName
-	user.Email = result.Email
-	user.DateCreated = result.DateCreated
 	return nil
 }
 
 func (user *User) Save() *errors.RestErr {
-	// A statement is a connection so it's necessary to close it after use it
+	// A statement is a connection so it's necessary to close it after use it cause we can run out of connections
 	stmt, err := users_db.Client.Prepare(queryInsertUser)
 	// Check if it was an error preparin the statement
 	if err != nil {
