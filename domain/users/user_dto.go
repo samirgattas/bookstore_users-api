@@ -14,7 +14,8 @@ type User struct {
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
 	Email       string `json:"email"`
-	DateCreated string
+	DateCreated string `json:"date_created"`
+	Password    string `json:"-"`
 }
 
 // With this method, the same user knows how to validate by himself

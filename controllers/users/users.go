@@ -10,7 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateUser(ctx *gin.Context) {
+func getUserID(userIDParam string) (int64, *errors.RestErr) {
+	userID, err := strconv.ParseInt(userIDParam, 10, 64)
+	if err != nil {
+		return 0, errors.NewBadRequestError("user id should be a number")
+	}
+	return userID, nil
+}
+
+func Create(ctx *gin.Context) {
 	var user users.User
 	// WAY 1
 	/*
@@ -40,11 +48,10 @@ func CreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, result)
 }
 
-func GetUser(ctx *gin.Context) {
-	userID, userErr := strconv.ParseInt(ctx.Param("user_id"), 10, 64)
+func Get(ctx *gin.Context) {
+	userID, userErr := getUserID(ctx.Param("user_id"))
 	if userErr != nil {
-		err := errors.NewBadRequestError("user id should be a number")
-		ctx.JSON(err.Status, err)
+		ctx.JSON(userErr.Status, userErr)
 		return
 	}
 	user, getErr := services.GetUser(userID)
@@ -54,16 +61,15 @@ func GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-func SearchUser(ctx *gin.Context) {
+func Search(ctx *gin.Context) {
 	ctx.String(http.StatusNotImplemented, "implement me")
 }
 
-func UpdateUser(ctx *gin.Context) {
+func Update(ctx *gin.Context) {
 	// Get userID query param
-	userID, userErr := strconv.ParseInt(ctx.Param("user_id"), 10, 64)
+	userID, userErr := getUserID(ctx.Param("user_id"))
 	if userErr != nil {
-		err := errors.NewBadRequestError("invalid json body")
-		ctx.JSON(err.Status, err.Error)
+		ctx.JSON(userErr.Status, userErr.Error)
 		return
 	}
 	// Get JSON body
@@ -84,4 +90,18 @@ func UpdateUser(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, result)
+}
+
+func Delete(ctx *gin.Context) {
+	userID, userErr := getUserID(ctx.Param("user_id"))
+	if userErr != nil {
+		ctx.JSON(userErr.Status, userErr)
+		return
+	}
+
+	if err := services.DeleteUser(userID); err != nil {
+		ctx.JSON(err.Status, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, map[string]string{"status": "deleted"})
 }
