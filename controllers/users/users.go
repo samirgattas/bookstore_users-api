@@ -57,3 +57,31 @@ func GetUser(ctx *gin.Context) {
 func SearchUser(ctx *gin.Context) {
 	ctx.String(http.StatusNotImplemented, "implement me")
 }
+
+func UpdateUser(ctx *gin.Context) {
+	// Get userID query param
+	userID, userErr := strconv.ParseInt(ctx.Param("user_id"), 10, 64)
+	if userErr != nil {
+		err := errors.NewBadRequestError("invalid json body")
+		ctx.JSON(err.Status, err.Error)
+		return
+	}
+	// Get JSON body
+	var user users.User
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		restErr := errors.NewBadRequestError("invalid json body")
+		ctx.JSON(restErr.Status, restErr)
+		return
+	}
+
+	user.ID = userID
+
+	isPartial := ctx.Request.Method == http.MethodPatch
+
+	result, err := services.UpdateUser(isPartial, user)
+	if err != nil {
+		ctx.JSON(err.Status, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, result)
+}
