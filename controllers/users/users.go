@@ -62,7 +62,14 @@ func Get(ctx *gin.Context) {
 }
 
 func Search(ctx *gin.Context) {
-	ctx.String(http.StatusNotImplemented, "implement me")
+	status := ctx.Query("status")
+
+	users, err := services.Search(status)
+	if err != nil {
+		ctx.JSON(err.Status, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, users)
 }
 
 func Update(ctx *gin.Context) {
