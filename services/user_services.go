@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/develop-microservices-in-go/bookstore_users-api/domain/users"
+	"github.com/develop-microservices-in-go/bookstore_users-api/utils/crypto_utils"
 	"github.com/develop-microservices-in-go/bookstore_users-api/utils/errors"
 )
 
@@ -21,6 +22,7 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr) {
 		return nil, err
 	}
 	user.Status = users.StatusActive
+	user.Password = crypto_utils.GetMd5(user.Password)
 	if err := user.Save(); err != nil {
 		return nil, err
 	}
@@ -60,7 +62,7 @@ func DeleteUser(userID int64) *errors.RestErr {
 	return user.Delete()
 }
 
-func Search(status string) ([]users.User, *errors.RestErr) {
+func Search(status string) (users.Users, *errors.RestErr) {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
 }

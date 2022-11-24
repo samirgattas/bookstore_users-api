@@ -24,6 +24,8 @@ type User struct {
 	Password    string `json:"password"`
 }
 
+type Users []User
+
 // With this method, the same user knows how to validate by himself
 func (user *User) Validate() *errors.RestErr {
 	// Remove white spaces and then, to lower case

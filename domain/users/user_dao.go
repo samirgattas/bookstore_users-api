@@ -129,5 +129,5 @@ func (user *User) FindByStatus(status string) ([]User, *errors.RestErr) {
 	if len(results) == 0 {
 		return nil, errors.NewNotFoundError(fmt.Sprintf("no user matching status %s", status))
 	}
-	return results, nil
+	return (results), nil
 }
