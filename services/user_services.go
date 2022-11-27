@@ -6,7 +6,23 @@ import (
 	"github.com/develop-microservices-in-go/bookstore_users-api/utils/errors"
 )
 
-func GetUser(userID int64) (*users.User, *errors.RestErr) {
+var (
+	UsersService usersServiceInterface = &usersService{}
+)
+
+type usersService struct {
+}
+
+// We need this interface so it let us mock the methods
+type usersServiceInterface interface {
+	GetUser(userID int64) (*users.User, *errors.RestErr)
+	CreateUser(user users.User) (*users.User, *errors.RestErr)
+	UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr)
+	DeleteUser(userID int64) *errors.RestErr
+	Search(status string) (users.Users, *errors.RestErr)
+}
+
+func (s *usersService) GetUser(userID int64) (*users.User, *errors.RestErr) {
 	if userID <= 0 {
 		return nil, errors.NewBadRequestError("invalid user id")
 	}
@@ -17,7 +33,7 @@ func GetUser(userID int64) (*users.User, *errors.RestErr) {
 	return result, nil
 }
 
-func CreateUser(user users.User) (*users.User, *errors.RestErr) {
+func (s *usersService) CreateUser(user users.User) (*users.User, *errors.RestErr) {
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -29,8 +45,8 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr) {
 	return &user, nil
 }
 
-func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) {
-	current, err := GetUser(user.ID)
+func (s *usersService) UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) {
+	current, err := s.GetUser(user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,12 +73,12 @@ func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) 
 	return current, nil
 }
 
-func DeleteUser(userID int64) *errors.RestErr {
+func (s *usersService) DeleteUser(userID int64) *errors.RestErr {
 	user := &users.User{ID: userID}
 	return user.Delete()
 }
 
-func Search(status string) (users.Users, *errors.RestErr) {
+func (s *usersService) Search(status string) (users.Users, *errors.RestErr) {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
 }
